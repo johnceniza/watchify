@@ -7,12 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <Spotify/Spotify.h>
 
 @interface ViewController : UIViewController {
-    
+    UIButton *loginButton;
 }
 
-- (void)authIsGood: (NSError *) theError;
+- (void)authIsGood: (NSError *) theError andSesssion: (SPTSession *)theSession;
 
 @end
 

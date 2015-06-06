@@ -50,7 +50,7 @@
         [[SPTAuth defaultInstance] handleAuthCallbackWithTriggeredAuthURL:url callback:^(NSError *error, SPTSession *session) {
             
             ViewController *mainViewController = (ViewController *)self.window.rootViewController;
-            [mainViewController authIsGood:error];
+            [mainViewController authIsGood:error andSesssion: session];
             
         }];
         

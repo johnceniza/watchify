@@ -6,8 +6,16 @@
 //  Copyright (c) 2015 AppDeco. All rights reserved.
 //
 
+/*
+ 
+ todo
+ 
+ 1. save session
+ 2. show playlist on table
+ 
+ */
+
 #import "ViewController.h"
-#import <Spotify/Spotify.h>
 
 @interface ViewController ()
 @property (nonatomic, strong) SPTSession *session;
@@ -30,6 +38,7 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
         [self createLoginButton];
     } else {
         //show player screen
+        [self getPlaylists:self.session];
     }
 }
 
@@ -39,22 +48,29 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 }
 
 - (BOOL)checkLoginHistory {
-    return NO; //no login history so show login button
+    
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"sessionInitiated"]) {
+        self.session = [[NSUserDefaults standardUserDefaults] objectForKey:@"sessionInitiated"];
+        return YES;
+    } else {
+        return NO; //no login history so show login button
+    }
 }
 
-- (void) authIsGood:(NSError*) theError {
-    NSLog(@"do we make it here?");
+- (void) authIsGood:(NSError*) theError andSesssion:(SPTSession *)theSession {
     if (theError != nil) {
         NSLog(@"*** Auth error: %@", theError);
     } else {
-        NSLog(@"Authentication Complete! - we should probably play something");
+        [loginButton removeFromSuperview];
+        self.session = theSession;
+        [self getPlaylists:self.session];
     }
 }
 
 #pragma mark - View Creation -
 
 - (void) createLoginButton {
-    UIButton *loginButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    loginButton = [UIButton buttonWithType:UIButtonTypeCustom];
     loginButton.frame = CGRectMake(0, 0, 200, 120);
     loginButton.center = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
     [loginButton setTitle:@"Connect to Spotify" forState:UIControlStateNormal];
@@ -77,6 +93,15 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
     // Opening a URL in Safari close to application launch may trigger
     // an iOS bug, so we wait a bit before doing so.
     [[UIApplication sharedApplication] openURL:loginURL];
+}
+
+- (void)getPlaylists: (SPTSession *)session {
+    
+    [SPTPlaylistList playlistsForUserWithSession:session callback:^(NSError *error, SPTPlaylistList *playlists) {
+        for (SPTPartialPlaylist *item in [playlists items]) {
+            NSLog(@"Playlist %@", [item name]);
+        }
+    }];
 }
 
 -(void)playUsingSession:(SPTSession *)session {
