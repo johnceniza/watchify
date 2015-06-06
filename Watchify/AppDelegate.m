@@ -7,33 +7,17 @@
 //
 
 #import "AppDelegate.h"
+#import "ViewController.h"
 #import <Spotify/Spotify.h>
 
 @interface AppDelegate ()
-@property (nonatomic, strong) SPTSession *session;
-@property (nonatomic, strong) SPTAudioStreamingController *player;
-@end
 
-static NSString * const kClientId = @"a7d6ad4806134d61aa38eb219fae13ff";
-static NSString * const kCallbackURL = @"watchifyspotify://";
+@end
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
-    
-    [[SPTAuth defaultInstance] setClientID:kClientId];
-    [[SPTAuth defaultInstance] setRedirectURL:[NSURL URLWithString:kCallbackURL]];
-    [[SPTAuth defaultInstance] setRequestedScopes:@[SPTAuthStreamingScope]];
-    
-    // Construct a login URL and open it
-    NSURL *loginURL = [[SPTAuth defaultInstance] loginURL];
-    
-    // Opening a URL in Safari close to application launch may trigger
-    // an iOS bug, so we wait a bit before doing so.
-    [application performSelector:@selector(openURL:)
-                      withObject:loginURL afterDelay:0.1];
-    
     return YES;
 }
 
@@ -65,42 +49,15 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
     if ([[SPTAuth defaultInstance] canHandleURL:url]) {
         [[SPTAuth defaultInstance] handleAuthCallbackWithTriggeredAuthURL:url callback:^(NSError *error, SPTSession *session) {
             
-            if (error != nil) {
-                NSLog(@"*** Auth error: %@", error);
-                return;
-            }
+            ViewController *mainViewController = (ViewController *)self.window.rootViewController;
+            [mainViewController authIsGood:error];
             
-            // Call the -playUsingSession: method to play a track
-            [self playUsingSession:session];
         }];
+        
         return YES;
     }
     
     return NO;
 }
-
--(void)playUsingSession:(SPTSession *)session {
-    
-    // Create a new player if needed
-    if (self.player == nil) {
-        self.player = [[SPTAudioStreamingController alloc] initWithClientId:[SPTAuth defaultInstance].clientID];
-    }
-    
-    [self.player loginWithSession:session callback:^(NSError *error) {
-        if (error != nil) {
-            NSLog(@"*** Logging in got error: %@", error);
-            return;
-        }
-        
-        NSURL *trackURI = [NSURL URLWithString:@"spotify:track:58s6EuEYJdlb0kO7awm3Vp"];
-        [self.player playURIs:@[ trackURI ] fromIndex:0 callback:^(NSError *error) {
-            if (error != nil) {
-                NSLog(@"*** Starting playback got error: %@", error);
-                return;
-            }
-        }];
-    }];
-}
-
 
 @end
