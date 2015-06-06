@@ -4,6 +4,21 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>Glance - Watchify WatchKit App.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>Notification - Watchify WatchKit App.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+		<key>Watchify WatchKit App.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 		<key>Watchify.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -18,6 +33,21 @@
 			<true/>
 		</dict>
 		<key>6D1FE9F11B233DE400249430</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>6DA400611B236E7600DA8B68</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>6DA400891B236ED400DA8B68</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>6DA400B01B236F6600DA8B68</key>
 		<dict>
 			<key>primary</key>
 			<true/>

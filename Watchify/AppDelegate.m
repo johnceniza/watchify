@@ -11,7 +11,8 @@
 #import <Spotify/Spotify.h>
 
 @interface AppDelegate ()
-
+@property (nonatomic, strong) SPTSession *session;
+@property (nonatomic, strong) SPTAudioStreamingController *player;
 @end
 
 @implementation AppDelegate
@@ -58,6 +59,60 @@
     }
     
     return NO;
+}
+
+- (void)application:(UIApplication *)application handleWatchKitExtensionRequest:(NSDictionary *)userInfo reply:(void(^)(NSDictionary *replyInfo))reply {
+    
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectoryPath = [paths objectAtIndex:0];
+    NSString *filePath = [documentsDirectoryPath stringByAppendingPathComponent:@"sessionData"];
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+        
+        NSData *data = [NSData dataWithContentsOfFile:filePath];
+        SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+        
+        self.session = savedSession;
+    } else {
+        NSLog(@"need to Authenticate using Watchify iPhone App");
+    }
+    
+    if ([userInfo objectForKey:@"theURI"]) {
+        
+        NSURL *url = [NSURL URLWithString:[userInfo objectForKey:@"theURI"]];
+        
+        [SPTPlaylistSnapshot playlistWithURI:url session:self.session callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
+            
+            NSMutableArray *arrayOfTitles = [[NSMutableArray alloc] init];
+            NSMutableArray *arrayOfURLs = [[NSMutableArray alloc] init];
+            
+            for (int i = 0; i<[songList.firstTrackPage.items count]; i++) {
+                [arrayOfTitles addObject:[[songList.firstTrackPage.items objectAtIndex:i] name]];
+                [arrayOfURLs addObject:[[[songList.firstTrackPage.items objectAtIndex:i] uri] absoluteString]];
+            }
+            
+            NSDictionary *dictOfTitles = [[NSDictionary alloc] initWithObjectsAndKeys:arrayOfTitles,@"titleArray",arrayOfURLs,@"URLArray", nil];
+            reply(dictOfTitles);
+        }];
+    } else if ([userInfo objectForKey:@"playThisSong"]) {
+        
+        NSURL *url = [NSURL URLWithString:[userInfo objectForKey:@"playThisSong"]];
+        /*
+        [self.player loginWithSession:self.session callback:^(NSError *error) {
+            if (error != nil) {
+                NSLog(@"*** Logging in got error: %@", error);
+                return;
+            }
+            
+            [self.player playURIs:uriIndex fromIndex:0 callback:^(NSError *error) {
+                if (error != nil) {
+                    NSLog(@"*** Starting playback got error: %@", error);
+                    return;
+                }
+            }];
+        }];
+         */
+    }
 }
 
 @end

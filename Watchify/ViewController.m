@@ -12,7 +12,12 @@
  
  1. save session
  2. show playlist on table
+ 3. show song list on table
  
+ watch:
+ 
+ 1. add bool to detect where screen closed (song list or play list) if song list - auto navigate to the song list
+
  */
 
 #import "ViewController.h"
@@ -48,9 +53,16 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 }
 
 - (BOOL)checkLoginHistory {
-    
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"sessionInitiated"]) {
-        self.session = [[NSUserDefaults standardUserDefaults] objectForKey:@"sessionInitiated"];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectoryPath = [paths objectAtIndex:0];
+    NSString *filePath = [documentsDirectoryPath stringByAppendingPathComponent:@"sessionData"];
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+        
+        NSData *data = [NSData dataWithContentsOfFile:filePath];
+        SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+
+        self.session = savedSession;
         return YES;
     } else {
         return NO; //no login history so show login button
@@ -62,9 +74,30 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
         NSLog(@"*** Auth error: %@", theError);
     } else {
         [loginButton removeFromSuperview];
+        
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *documentsDirectoryPath = [paths objectAtIndex:0];
+        NSString *filePath = [documentsDirectoryPath stringByAppendingPathComponent:@"sessionData"];
+        [NSKeyedArchiver archiveRootObject:theSession toFile:filePath];
+        
         self.session = theSession;
         [self getPlaylists:self.session];
     }
+}
+
+- (void)sharePlaylist: (NSMutableDictionary *) snapshot {
+    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+    NSArray *allKeys = [snapshot allKeys];
+    
+    for (int i = 0; i < [snapshot count]; i++) {
+        NSString *newURL = [[snapshot objectForKey:[allKeys objectAtIndex:i]] absoluteString];
+        
+        [snapshot setObject:newURL forKey:[allKeys objectAtIndex:i]];
+    }
+    
+    NSMutableDictionary *listOfPlaylistsToDisplay = [[NSMutableDictionary alloc] initWithDictionary:snapshot];
+    [newDefault setObject:listOfPlaylistsToDisplay forKey:@"currentPlaylist"];
+    [newDefault synchronize];
 }
 
 #pragma mark - View Creation -
@@ -97,18 +130,50 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 
 - (void)getPlaylists: (SPTSession *)session {
     
+    NSMutableDictionary *playListDict = [[NSMutableDictionary alloc] init];
+
     [SPTPlaylistList playlistsForUserWithSession:session callback:^(NSError *error, SPTPlaylistList *playlists) {
         for (SPTPartialPlaylist *item in [playlists items]) {
-            NSLog(@"Playlist %@", [item name]);
+            
+            if (error) {
+                NSLog(@"Error :%@", error);
+            } else {
+            //WIP - is it possible to have a playlist of the same name? Could confuse user - I expected playlsts to have unique ID to each of them per user but it doesn't seem like this is the case? In any case will show Playlist in the same order retreieved to clarify for user
+            
+            [playListDict setObject:[item uri] forKey:[item name]];
+                
+            }
         }
+        
+        [self getSongList: playListDict];
+        [self sharePlaylist: playListDict];
     }];
 }
 
--(void)playUsingSession:(SPTSession *)session {
-    
+- (void)getSongList: (NSDictionary *)playlist {
+    //pick one for testing purposes
+    NSString *pickedPlaylist = @"CDSK";
+
+    //show song list
+    [SPTPlaylistSnapshot playlistWithURI:[playlist objectForKey:pickedPlaylist] session:self.session callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
+        
+        [self playPlaylist:songList withSession:self.session];
+
+        //WIP - add code to show song list on display and keep track of index that's how we will figure out what is playing/user wants to play
+    }];
+}
+
+- (void)playPlaylist: (SPTPlaylistSnapshot *)playlistSnapshot withSession: (SPTSession *) session {
     // Create a new player if needed
     if (self.player == nil) {
         self.player = [[SPTAudioStreamingController alloc] initWithClientId:[SPTAuth defaultInstance].clientID];
+    }
+    
+    //Extract URI here for playing purposes only - need to really keep track of tracks in its entirety for title display, length, etc.
+    NSMutableArray *uriIndex = [[NSMutableArray alloc] init];
+
+    for (int i = 0; i<[playlistSnapshot.firstTrackPage.items count]; i++) {
+        [uriIndex addObject:[[playlistSnapshot.firstTrackPage.items objectAtIndex:i] uri]];
     }
     
     [self.player loginWithSession:session callback:^(NSError *error) {
@@ -117,8 +182,7 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
             return;
         }
         
-        NSURL *trackURI = [NSURL URLWithString:@"spotify:track:58s6EuEYJdlb0kO7awm3Vp"];
-        [self.player playURIs:@[ trackURI ] fromIndex:0 callback:^(NSError *error) {
+        [self.player playURIs:uriIndex fromIndex:0 callback:^(NSError *error) {
             if (error != nil) {
                 NSLog(@"*** Starting playback got error: %@", error);
                 return;

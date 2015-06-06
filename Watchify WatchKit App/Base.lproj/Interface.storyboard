@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder.WatchKit.Storyboard" version="3.0" toolsVersion="7706" systemVersion="14D136" targetRuntime="watchKit" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="AgC-eL-Hgc">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7703"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBWatchKitPlugin" version="7701"/>
+    </dependencies>
+    <scenes>
+        <!--Playlists-->
+        <scene sceneID="aou-V4-d1y">
+            <objects>
+                <controller title="Playlists" id="AgC-eL-Hgc" customClass="InterfaceController">
+                    <items>
+                        <table alignment="left" id="bze-8V-Y3D">
+                            <items>
+                                <tableRow identifier="universalRowID" id="0y0-H6-bYH" customClass="universalRow">
+                                    <group key="rootItem" width="1" alignment="left" layout="vertical" id="hAj-9Q-m9l">
+                                        <items>
+                                            <label alignment="left" text="Playlist Name" textAlignment="left" id="79J-nf-R7Y">
+                                                <fontDescription key="font" style="UICTFontTextStyleHeadline"/>
+                                            </label>
+                                            <label alignment="left" text="Artist Name" textAlignment="left" minimumScaleFactor="0.80000000000000004" id="a5W-Gv-9Du">
+                                                <fontDescription key="font" style="UICTFontTextStyleFootnote"/>
+                                            </label>
+                                        </items>
+                                        <connections>
+                                            <segue destination="4tB-kU-wov" kind="push" identifier="songListSegue" id="7J7-pO-kaK"/>
+                                        </connections>
+                                    </group>
+                                    <connections>
+                                        <outlet property="mainTitle" destination="79J-nf-R7Y" id="ads-fo-uXw"/>
+                                        <outlet property="subtitleLabel" destination="a5W-Gv-9Du" id="Ggd-CH-TI9"/>
+                                    </connections>
+                                </tableRow>
+                            </items>
+                        </table>
+                    </items>
+                    <connections>
+                        <outlet property="playlistTable" destination="bze-8V-Y3D" id="3SN-bd-tD2"/>
+                    </connections>
+                </controller>
+            </objects>
+            <point key="canvasLocation" x="80" y="235"/>
+        </scene>
+        <!--Songs-->
+        <scene sceneID="PIn-XG-ueZ">
+            <objects>
+                <controller title="Songs" id="4tB-kU-wov" customClass="songListController">
+                    <items>
+                        <table alignment="left" id="eFb-yc-lAZ">
+                            <items>
+                                <tableRow identifier="universalRowSong" id="rrK-ZW-2Lf" customClass="universalRow">
+                                    <group key="rootItem" width="1" alignment="left" layout="vertical" id="e3J-3m-H3m">
+                                        <items>
+                                            <label alignment="left" text="Song Name" id="r97-xV-cU7">
+                                                <fontDescription key="font" style="UICTFontTextStyleHeadline"/>
+                                            </label>
+                                            <label alignment="left" text="Artist Name" id="NJF-R6-d0v">
+                                                <fontDescription key="font" style="UICTFontTextStyleFootnote"/>
+                                            </label>
+                                        </items>
+                                    </group>
+                                    <connections>
+                                        <outlet property="mainTitle" destination="r97-xV-cU7" id="cr9-TZ-5Lr"/>
+                                        <outlet property="subtitleLabel" destination="NJF-R6-d0v" id="kCY-DZ-zmH"/>
+                                    </connections>
+                                </tableRow>
+                            </items>
+                        </table>
+                    </items>
+                    <connections>
+                        <outlet property="songlistTable" destination="eFb-yc-lAZ" id="pWL-Hh-Ryf"/>
+                    </connections>
+                </controller>
+            </objects>
+            <point key="canvasLocation" x="337" y="235"/>
+        </scene>
+        <!--Glance Interface Controller-->
+        <scene sceneID="rjY-Ar-IMT">
+            <objects>
+                <glanceController spacing="0.0" id="Sv0-Ai-Zie" customClass="GlanceController">
+                    <items>
+                        <group alignment="left" id="gv7-I2-MZq"/>
+                        <group alignment="left" id="eew-Gs-W6Y"/>
+                    </items>
+                    <edgeInsets key="margins" left="0.0" right="0.0" top="0.0" bottom="14"/>
+                </glanceController>
+            </objects>
+            <point key="canvasLocation" x="164" y="514"/>
+        </scene>
+    </scenes>
+</document>
