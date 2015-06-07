@@ -9,6 +9,7 @@
 #import "AppDelegate.h"
 #import "ViewController.h"
 #import <Spotify/Spotify.h>
+#import <AVFoundation/AVFoundation.h>
 
 @interface AppDelegate ()
 @property (nonatomic, strong) SPTSession *session;
@@ -19,6 +20,9 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    
+    //[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+    
     return YES;
 }
 
@@ -71,18 +75,25 @@
         
         NSData *data = [NSData dataWithContentsOfFile:filePath];
         SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:data];
-        
         self.session = savedSession;
     } else {
-        NSLog(@"need to Authenticate using Watchify iPhone App");
+        NSDictionary *authNeeded = [[NSDictionary alloc] initWithObjectsAndKeys:@"Please launch iPhone app to authenticate Sptofiy login.",@"authNeeded", nil];
+        reply(authNeeded);
     }
     
     if ([userInfo objectForKey:@"theURI"]) {
         
         NSURL *url = [NSURL URLWithString:[userInfo objectForKey:@"theURI"]];
         
+        __block UIBackgroundTaskIdentifier bogusWorkaroundTask;
+        bogusWorkaroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+            [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
+        }];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ // increase the time to a larger value if you still don't get the data!!! I used 2 secs previously but my network is too weak!!!
+            [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
+        });
+        
         [SPTPlaylistSnapshot playlistWithURI:url session:self.session callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
-            
             NSMutableArray *arrayOfTitles = [[NSMutableArray alloc] init];
             NSMutableArray *arrayOfURLs = [[NSMutableArray alloc] init];
             
@@ -92,26 +103,68 @@
             }
             
             NSDictionary *dictOfTitles = [[NSDictionary alloc] initWithObjectsAndKeys:arrayOfTitles,@"titleArray",arrayOfURLs,@"URLArray", nil];
+            
             reply(dictOfTitles);
+            
         }];
+        
     } else if ([userInfo objectForKey:@"playThisSong"]) {
         
-        NSURL *url = [NSURL URLWithString:[userInfo objectForKey:@"playThisSong"]];
-        /*
-        [self.player loginWithSession:self.session callback:^(NSError *error) {
-            if (error != nil) {
-                NSLog(@"*** Logging in got error: %@", error);
-                return;
-            }
-            
-            [self.player playURIs:uriIndex fromIndex:0 callback:^(NSError *error) {
+        NSArray *arrayOfURIStrings = [userInfo objectForKey:@"playThisSong"];
+        NSMutableArray *arrayOfURIs = [[NSMutableArray alloc] init];
+        int indexToPlay = [[userInfo objectForKey:@"playIndex"] intValue];
+        
+        for (int i = 0; i < [arrayOfURIStrings count]; i++) {
+            NSURL *URLfromString = [NSURL URLWithString:[arrayOfURIStrings objectAtIndex:i]];
+            [arrayOfURIs addObject:URLfromString];
+        }
+
+        if (self.player == nil) {
+            self.player = [[SPTAudioStreamingController alloc] initWithClientId:[SPTAuth defaultInstance].clientID];
+        }
+        
+        if (self.player.isPlaying) {
+            [self.player stop:nil];
+            [self.player playURIs:arrayOfURIs fromIndex:indexToPlay callback:^(NSError *error) {
                 if (error != nil) {
                     NSLog(@"*** Starting playback got error: %@", error);
-                    return;
+                    NSDictionary *errorDict = [[NSDictionary alloc] initWithObjectsAndKeys:error,@"errorKey", nil];
+                    reply(errorDict);
                 }
+                NSDictionary *successPlaying = [[NSDictionary alloc] initWithObjectsAndKeys:@"Playing Song!",@"errorKey", nil];
+                reply(successPlaying);
             }];
-        }];
-         */
+        } else {
+            __block UIBackgroundTaskIdentifier bogusWorkaroundTask;
+            bogusWorkaroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+                [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
+            }];
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ // increase the time to a larger value if you still don't get the data!!! I used 2 secs previously but my network is too weak!!!
+                [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
+            });
+            
+            [self.player loginWithSession:self.session callback:^(NSError *error) {
+                if (error != nil) {
+                    NSLog(@"*** Logging in got error: %@", error);
+                    NSDictionary *errorDict = [[NSDictionary alloc] initWithObjectsAndKeys:error,@"errorKey", nil];
+                    reply(errorDict);
+                }
+                
+                [self.player playURIs:arrayOfURIs fromIndex:indexToPlay callback:^(NSError *error) {
+                    if (error != nil) {
+                        NSLog(@"*** Starting playback got error: %@", error);
+                        NSDictionary *errorDict = [[NSDictionary alloc] initWithObjectsAndKeys:error,@"errorKey", nil];
+                        reply(errorDict);
+                    }
+                    NSDictionary *successPlaying = [[NSDictionary alloc] initWithObjectsAndKeys:@"Playing Song!",@"errorKey", nil];
+                    reply(successPlaying);
+                }];
+            }];
+        }
+        
+    } else {
+        
+        reply(nil);
     }
 }
 

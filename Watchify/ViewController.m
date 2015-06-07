@@ -152,8 +152,9 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 
 - (void)getSongList: (NSDictionary *)playlist {
     //pick one for testing purposes
-    NSString *pickedPlaylist = @"CDSK";
+    //NSString *pickedPlaylist = @"CDSK";
 
+    /*
     //show song list
     [SPTPlaylistSnapshot playlistWithURI:[playlist objectForKey:pickedPlaylist] session:self.session callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
         
@@ -161,6 +162,7 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 
         //WIP - add code to show song list on display and keep track of index that's how we will figure out what is playing/user wants to play
     }];
+     */
 }
 
 - (void)playPlaylist: (SPTPlaylistSnapshot *)playlistSnapshot withSession: (SPTSession *) session {

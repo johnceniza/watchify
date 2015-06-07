@@ -26,14 +26,13 @@
 
     [songListController openParentApplication:request reply:^(NSDictionary *replyInfo, NSError *error) {
         
+        NSLog(@"%@", replyInfo);
+        
         if (error) {
             NSLog(@"%@", error);
         } else {
-            
-            NSLog(@"array of songs: %@", [replyInfo objectForKey:@"titleArray"]);
-            NSLog(@"array of songs: %@", [replyInfo objectForKey:@"URLArray"]);
             songArray = [replyInfo objectForKey:@"titleArray"];
-            
+            URIArray = [replyInfo objectForKey:@"URLArray"];
             [self setupTable];
         }
     }];
@@ -66,6 +65,21 @@
     
 }
 */
+
+- (void)table:(WKInterfaceTable *)table didSelectRowAtIndex:(NSInteger)rowIndex {
+    
+    NSDictionary *songRequestURI = [NSDictionary dictionaryWithObjectsAndKeys:URIArray, @"playThisSong", [NSNumber numberWithLong:rowIndex], @"playIndex", nil];
+
+    [songListController openParentApplication:songRequestURI reply:^(NSDictionary *replyInfo, NSError *error) {
+        
+        if (error) {
+            NSLog(@"%@", error);
+        } else {
+            //[self setupTable];
+            NSLog(@"%@", replyInfo);
+        }
+    }];
+}
 
 @end
 

@@ -11,6 +11,7 @@
 
 @interface songListController : WKInterfaceController {
     NSMutableArray *songArray;
+    NSMutableArray *URIArray;
 }
 
 @property (weak, nonatomic) IBOutlet WKInterfaceTable *songlistTable;
