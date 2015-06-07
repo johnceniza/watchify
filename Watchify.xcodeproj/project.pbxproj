@@ -13,6 +13,7 @@
 		6D1FE9E81B233DE300249430 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6D1FE9E61B233DE300249430 /* Main.storyboard */; };
 		6D1FE9EA1B233DE300249430 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6D1FE9E91B233DE300249430 /* Images.xcassets */; };
 		6D1FE9ED1B233DE300249430 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6D1FE9EB1B233DE300249430 /* LaunchScreen.xib */; };
+		6D569CDA1B24A61100180D84 /* playerInterfaceController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6D569CD91B24A61100180D84 /* playerInterfaceController.m */; };
 		6D8A1EC41B23A2DD00FBD364 /* songListController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6D8A1EC31B23A2DD00FBD364 /* songListController.m */; };
 		6DA400461B23415E00DA8B68 /* Spotify.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DA400451B23415E00DA8B68 /* Spotify.framework */; };
 		6DA400491B23458600DA8B68 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DA400481B23458600DA8B68 /* AVFoundation.framework */; };
@@ -69,6 +70,8 @@
 		6D1FE9E71B233DE300249430 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		6D1FE9E91B233DE300249430 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		6D1FE9EC1B233DE300249430 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		6D569CD81B24A61100180D84 /* playerInterfaceController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = playerInterfaceController.h; sourceTree = "<group>"; };
+		6D569CD91B24A61100180D84 /* playerInterfaceController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = playerInterfaceController.m; sourceTree = "<group>"; };
 		6D8A1EC21B23A2DD00FBD364 /* songListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = songListController.h; sourceTree = "<group>"; };
 		6D8A1EC31B23A2DD00FBD364 /* songListController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = songListController.m; sourceTree = "<group>"; };
 		6DA400451B23415E00DA8B68 /* Spotify.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Spotify.framework; sourceTree = "<group>"; };
@@ -170,6 +173,8 @@
 				6DA400A81B236F6600DA8B68 /* InterfaceController.m */,
 				6D8A1EC21B23A2DD00FBD364 /* songListController.h */,
 				6D8A1EC31B23A2DD00FBD364 /* songListController.m */,
+				6D569CD81B24A61100180D84 /* playerInterfaceController.h */,
+				6D569CD91B24A61100180D84 /* playerInterfaceController.m */,
 				6DA400AA1B236F6600DA8B68 /* GlanceController.h */,
 				6DA400AB1B236F6600DA8B68 /* GlanceController.m */,
 				6DA400AD1B236F6600DA8B68 /* Images.xcassets */,
@@ -363,6 +368,7 @@
 				6DA400A91B236F6600DA8B68 /* InterfaceController.m in Sources */,
 				6DA400AC1B236F6600DA8B68 /* GlanceController.m in Sources */,
 				6D8A1EC41B23A2DD00FBD364 /* songListController.m in Sources */,
+				6D569CDA1B24A61100180D84 /* playerInterfaceController.m in Sources */,
 				6DA400CB1B2373C000DA8B68 /* universalRow.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

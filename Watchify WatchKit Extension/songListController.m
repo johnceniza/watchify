@@ -60,25 +60,9 @@
     }
 }
 
-/*
 - (id)contextForSegueWithIdentifier:(NSString *)segueIdentifier inTable:(WKInterfaceTable *)table rowIndex:(NSInteger)rowIndex {
-    
-}
-*/
-
-- (void)table:(WKInterfaceTable *)table didSelectRowAtIndex:(NSInteger)rowIndex {
-    
-    NSDictionary *songRequestURI = [NSDictionary dictionaryWithObjectsAndKeys:URIArray, @"playThisSong", [NSNumber numberWithLong:rowIndex], @"playIndex", nil];
-
-    [songListController openParentApplication:songRequestURI reply:^(NSDictionary *replyInfo, NSError *error) {
-        
-        if (error) {
-            NSLog(@"%@", error);
-        } else {
-            //[self setupTable];
-            NSLog(@"%@", replyInfo);
-        }
-    }];
+    NSDictionary *songRequestURI = [NSDictionary dictionaryWithObjectsAndKeys:URIArray, @"playThisSong", [NSNumber numberWithLong:rowIndex], @"playIndex",songArray,@"songList", nil];
+    return (songRequestURI);
 }
 
 @end

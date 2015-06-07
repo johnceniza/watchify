@@ -58,6 +58,9 @@
                                                 <fontDescription key="font" style="UICTFontTextStyleFootnote"/>
                                             </label>
                                         </items>
+                                        <connections>
+                                            <segue destination="ilK-Qu-X65" kind="push" identifier="playerSegue" id="02L-iA-oj3"/>
+                                        </connections>
                                     </group>
                                     <connections>
                                         <outlet property="mainTitle" destination="r97-xV-cU7" id="cr9-TZ-5Lr"/>
@@ -73,6 +76,53 @@
                 </controller>
             </objects>
             <point key="canvasLocation" x="337" y="235"/>
+        </scene>
+        <!--Player-->
+        <scene sceneID="tx0-bV-1bp">
+            <objects>
+                <controller title="Player" id="ilK-Qu-X65" customClass="playerInterfaceController">
+                    <items>
+                        <label alignment="center" verticalAlignment="center" text="Song Title" id="zza-Cl-vOj">
+                            <fontDescription key="font" style="UICTFontTextStyleHeadline"/>
+                        </label>
+                        <label alignment="center" verticalAlignment="center" text="Artist" id="riv-C0-VBg">
+                            <fontDescription key="font" style="UICTFontTextStyleFootnote"/>
+                        </label>
+                        <group width="136" alignment="left" verticalAlignment="center" id="d51-9W-Z5q">
+                            <items>
+                                <button width="35" alignment="left" verticalAlignment="center" title="&lt;" id="8sV-Q8-hs4">
+                                    <fontDescription key="font" style="UICTFontTextStyleFootnote"/>
+                                    <connections>
+                                        <action selector="prevTracak:" destination="ilK-Qu-X65" id="ROr-2Y-Qgg"/>
+                                    </connections>
+                                </button>
+                                <button width="61" alignment="left" verticalAlignment="center" title="Play" id="dMW-iq-U68">
+                                    <fontDescription key="font" style="UICTFontTextStyleFootnote"/>
+                                    <connections>
+                                        <action selector="playOrPause:" destination="ilK-Qu-X65" id="h6s-UQ-MDX"/>
+                                    </connections>
+                                </button>
+                                <button width="35" alignment="left" verticalAlignment="center" title="&gt;" id="eVo-rv-tnS">
+                                    <fontDescription key="font" style="UICTFontTextStyleFootnote"/>
+                                    <connections>
+                                        <action selector="nextTrack:" destination="ilK-Qu-X65" id="DT1-Bu-Lt3"/>
+                                    </connections>
+                                </button>
+                            </items>
+                        </group>
+                        <slider width="1" alignment="left" verticalAlignment="center" value="1" maximum="3" steps="3" id="XAx-0k-kPu"/>
+                    </items>
+                    <connections>
+                        <outlet property="artistLabel" destination="riv-C0-VBg" id="7ww-jz-ZMB"/>
+                        <outlet property="nextButton" destination="eVo-rv-tnS" id="dqJ-B4-Kfw"/>
+                        <outlet property="playButton" destination="dMW-iq-U68" id="Xfu-di-hKk"/>
+                        <outlet property="prevButton" destination="8sV-Q8-hs4" id="Owp-eG-Bqi"/>
+                        <outlet property="songTitle" destination="zza-Cl-vOj" id="SiI-Kg-ou9"/>
+                        <outlet property="volumeSlider" destination="XAx-0k-kPu" id="PiW-l3-CxL"/>
+                    </connections>
+                </controller>
+            </objects>
+            <point key="canvasLocation" x="582" y="235"/>
         </scene>
         <!--Glance Interface Controller-->
         <scene sceneID="rjY-Ar-IMT">
