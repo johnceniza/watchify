@@ -25,6 +25,7 @@
 @interface ViewController ()
 @property (nonatomic, strong) SPTSession *session;
 @property (nonatomic, strong) SPTAudioStreamingController *player;
+@property (atomic, readwrite) BOOL firstLoad;
 @end
 
 static NSString * const kClientId = @"a7d6ad4806134d61aa38eb219fae13ff";
@@ -35,37 +36,55 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
+    self.firstLoad = YES;
+    [self checkSession];
+}
+
+- (void)checkSession {
+    SPTAuth *auth = [SPTAuth defaultInstance];
     
-    //if statement to check if already logged in
-    
-    if (![self checkLoginHistory]) {
-        //show login screen
+    // Check if we have a token at all
+    if (auth.session == nil) {
         [self createLoginButton];
-    } else {
-        //show player screen
-        [self getPlaylists:self.session];
     }
+    
+    // Check if it's still valid
+    if ([auth.session isValid] && self.firstLoad) {
+        // It's still valid, show the player.
+        [self getPlaylists:self.session];
+        return;
+    }
+    
+    // Oh noes, the token has expired, if we have a token refresh service set up, we'll call tat one.
+    if (auth.hasTokenRefreshService) {
+        [self renewTokenAndShowPlayer];
+    }
+}
+
+- (void)renewTokenAndShowPlayer {
+    SPTAuth *auth = [SPTAuth defaultInstance];
+    
+    [auth renewSession:auth.session callback:^(NSError *error, SPTSession *session) {
+        auth.session = session;
+        
+        NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:auth.session];
+        
+        NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+        [newDefault setObject:authSessionData forKey:@"authSessionDataKey"];
+        [newDefault synchronize];
+        
+        if (error) {
+            NSLog(@"*** Error renewing session: %@", error);
+            return;
+        }
+        
+        [self getPlaylists:self.session];
+    }];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
-}
-
-- (BOOL)checkLoginHistory {
-    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-
-    if ([newDefault objectForKey:@"sessionDataKey"]) {
-        
-        SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"sessionDataKey"]];
-
-        NSLog(@"%@", savedSession);
-        
-        self.session = savedSession;
-        return YES;
-    } else {
-        return NO; //no login history so show login button
-    }
 }
 
 - (void) authIsGood:(NSError*) theError andSesssion:(SPTSession *)theSession {
@@ -74,14 +93,17 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
     } else {
         [loginButton removeFromSuperview];
         
-        NSData *sessionData = [NSKeyedArchiver archivedDataWithRootObject:theSession];
+        SPTAuth *auth = [SPTAuth defaultInstance];
+
+        auth.session = theSession;
+        
+        NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:auth.session];
         
         NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-        [newDefault setObject:sessionData forKey:@"sessionDataKey"];
+        [newDefault setObject:authSessionData forKey:@"authSessionDataKey"];
         [newDefault synchronize];
-        
-        self.session = theSession;
-        [self getPlaylists:self.session];
+
+        [self getPlaylists:auth.session];
     }
 }
 
@@ -121,6 +143,8 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 }
 
 - (void)getPlaylists: (SPTSession *)session {
+    self.firstLoad = NO;
+
     NSMutableDictionary *playlistDict = [[NSMutableDictionary alloc] init];
     
     /*3 keys in dict
@@ -194,6 +218,12 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
             }
         }];
     }];
+}
+
+- (SPTAuth *)giveMeAuth {
+    SPTAuth *auth = [SPTAuth defaultInstance];
+    NSLog(@"%@",auth);
+    return auth;
 }
 
 @end
