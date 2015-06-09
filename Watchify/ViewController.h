@@ -14,6 +14,7 @@
 }
 
 - (void)authIsGood: (NSError *) theError andSesssion: (SPTSession *)theSession;
+- (SPTAuth *)giveMeAuth;
 
 @end
 

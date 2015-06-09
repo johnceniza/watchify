@@ -68,24 +68,41 @@
 - (void)application:(UIApplication *)application handleWatchKitExtensionRequest:(NSDictionary *)userInfo reply:(void(^)(NSDictionary *replyInfo))reply {
     
     if ([userInfo objectForKey:@"watchNeedsAuth"]) {
+        SPTAuth *auth = [SPTAuth defaultInstance];
         
         NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+        auth.session = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
+        [self saveSession:auth];
         
-        if ([newDefault objectForKey:@"sessionDataKey"]) {
-            
-            SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"sessionDataKey"]];
-            self.session = savedSession;
-            
-            NSDictionary *authSuccess = [[NSDictionary alloc] initWithObjectsAndKeys:@"Authentication successful",@"authSuccess", nil];
-            reply(authSuccess);
-
-        } else {
+        // Check if we have a token at all
+        if (auth.session == nil) {
             NSDictionary *authNeeded = [[NSDictionary alloc] initWithObjectsAndKeys:@"Please launch iPhone app to authenticate Sptofiy login.",@"authNeeded", nil];
             reply(authNeeded);
         }
-    
-    } else if ([userInfo objectForKey:@"playlistURI"]) {
         
+        // Check if it's still valid
+        if ([auth.session isValid]) {
+            // It's still valid, show the player.
+            NSDictionary *authSuccess = [[NSDictionary alloc] initWithObjectsAndKeys:@"Authentication successful",@"authSuccess", nil];
+            reply(authSuccess);
+        }
+        
+        // Oh noes, the token has expired, if we have a token refresh service set up, we'll call tat one.
+        if (auth.hasTokenRefreshService) {
+            [[SPTAuth defaultInstance] renewSession:auth.session callback:^(NSError *error, SPTSession *sessionRefresh) {
+                auth.session = sessionRefresh;
+                NSDictionary *authSuccess = [[NSDictionary alloc] initWithObjectsAndKeys:@"Authentication refresh successful",@"authSuccess", nil];
+                reply(authSuccess);
+            }];
+        }
+        
+    } else if ([userInfo objectForKey:@"playlistURI"]) {
+        SPTAuth *auth = [SPTAuth defaultInstance];
+        
+        NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+        auth.session = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
+        [self saveSession:auth];
+
         NSURL *url = [NSURL URLWithString:[userInfo objectForKey:@"playlistURI"]];
 
         __block UIBackgroundTaskIdentifier bogusWorkaroundTask;
@@ -96,7 +113,7 @@
             [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
         });
         
-        [SPTPlaylistSnapshot playlistWithURI:url session:self.session callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
+        [SPTPlaylistSnapshot playlistWithURI:url session:auth.session callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
             NSMutableDictionary *songlistDictionary = [[NSMutableDictionary alloc] init];
             /*4 keys in dict
              1. track name
@@ -129,7 +146,12 @@
         }];
         
     } else if ([userInfo objectForKey:@"songTitleList"]) {
+        SPTAuth *auth = [SPTAuth defaultInstance];
         
+        NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+        auth.session = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
+        [self saveSession:auth];
+
         NSArray *arrayOfURIStrings = [userInfo objectForKey:@"songURISelected"];
         NSMutableArray *arrayOfURIs = [[NSMutableArray alloc] init];
         int indexToPlay = [[userInfo objectForKey:@"playIndex"] intValue];
@@ -164,7 +186,7 @@
                 [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
             });
             
-            [self.player loginWithSession:self.session callback:^(NSError *error) {
+            [self.player loginWithSession:auth.session callback:^(NSError *error) {
                 if (error != nil) {
                     NSLog(@"*** Logging in got error: %@", error);
                     NSDictionary *errorDict = [[NSDictionary alloc] initWithObjectsAndKeys:error,@"errorKey", nil];
@@ -202,6 +224,14 @@
 
         reply(nil);
     }
+}
+
+- (void)saveSession: (SPTAuth *)authToSave {
+    NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:authToSave.session];
+    
+    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+    [newDefault setObject:authSessionData forKey:@"authSessionDataKey"];
+    [newDefault synchronize];
 }
 
 @end
