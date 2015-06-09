@@ -10,8 +10,7 @@
 #import <Foundation/Foundation.h>
 
 @interface songListController : WKInterfaceController {
-    NSMutableArray *songArray;
-    NSMutableArray *URIArray;
+    NSMutableDictionary *songlistDict;
 }
 
 @property (weak, nonatomic) IBOutlet WKInterfaceTable *songlistTable;

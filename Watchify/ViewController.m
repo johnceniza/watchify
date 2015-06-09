@@ -53,15 +53,14 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 }
 
 - (BOOL)checkLoginHistory {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *documentsDirectoryPath = [paths objectAtIndex:0];
-    NSString *filePath = [documentsDirectoryPath stringByAppendingPathComponent:@"sessionData"];
+    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
 
-    if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+    if ([newDefault objectForKey:@"sessionDataKey"]) {
         
-        NSData *data = [NSData dataWithContentsOfFile:filePath];
-        SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+        SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"sessionDataKey"]];
 
+        NSLog(@"%@", savedSession);
+        
         self.session = savedSession;
         return YES;
     } else {
@@ -75,10 +74,11 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
     } else {
         [loginButton removeFromSuperview];
         
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-        NSString *documentsDirectoryPath = [paths objectAtIndex:0];
-        NSString *filePath = [documentsDirectoryPath stringByAppendingPathComponent:@"sessionData"];
-        [NSKeyedArchiver archiveRootObject:theSession toFile:filePath];
+        NSData *sessionData = [NSKeyedArchiver archivedDataWithRootObject:theSession];
+        
+        NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+        [newDefault setObject:sessionData forKey:@"sessionDataKey"];
+        [newDefault synchronize];
         
         self.session = theSession;
         [self getPlaylists:self.session];
@@ -87,16 +87,8 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 
 - (void)sharePlaylist: (NSMutableDictionary *) snapshot {
     NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-    NSArray *allKeys = [snapshot allKeys];
-    
-    for (int i = 0; i < [snapshot count]; i++) {
-        NSString *newURL = [[snapshot objectForKey:[allKeys objectAtIndex:i]] absoluteString];
-        
-        [snapshot setObject:newURL forKey:[allKeys objectAtIndex:i]];
-    }
-    
     NSMutableDictionary *listOfPlaylistsToDisplay = [[NSMutableDictionary alloc] initWithDictionary:snapshot];
-    [newDefault setObject:listOfPlaylistsToDisplay forKey:@"currentPlaylist"];
+    [newDefault setObject:listOfPlaylistsToDisplay forKey:@"listOfPlaylists"];
     [newDefault synchronize];
 }
 
@@ -129,24 +121,35 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 }
 
 - (void)getPlaylists: (SPTSession *)session {
+    NSMutableDictionary *playlistDict = [[NSMutableDictionary alloc] init];
     
-    NSMutableDictionary *playListDict = [[NSMutableDictionary alloc] init];
+    /*3 keys in dict
+         1. playlists
+         2. playlist URIs
+         3. # of tracks
+     */
+    
+    NSMutableArray *playlistTitleArray = [[NSMutableArray alloc] init];
+    NSMutableArray *playlistURIArray = [[NSMutableArray alloc] init];
+    NSMutableArray *playlistTrackCountArray = [[NSMutableArray alloc] init];
 
     [SPTPlaylistList playlistsForUserWithSession:session callback:^(NSError *error, SPTPlaylistList *playlists) {
         for (SPTPartialPlaylist *item in [playlists items]) {
-            
             if (error) {
                 NSLog(@"Error :%@", error);
             } else {
-            //WIP - is it possible to have a playlist of the same name? Could confuse user - I expected playlsts to have unique ID to each of them per user but it doesn't seem like this is the case? In any case will show Playlist in the same order retreieved to clarify for user
-            
-            [playListDict setObject:[item uri] forKey:[item name]];
-                
+                [playlistTitleArray addObject:[item name]];
+                [playlistURIArray addObject:[[item uri] absoluteString]];
+                [playlistTrackCountArray addObject:[NSNumber numberWithInteger:[item trackCount]]];
             }
         }
         
-        [self getSongList: playListDict];
-        [self sharePlaylist: playListDict];
+        [playlistDict setObject:playlistTitleArray forKey:@"playlistTitles"];
+        [playlistDict setObject:playlistURIArray forKey:@"playlistURIs"];
+        [playlistDict setObject:playlistTrackCountArray forKey:@"playlistTrackCounts"];
+
+        //[self getSongList: playlistDict];
+        [self sharePlaylist: playlistDict];
     }];
 }
 

@@ -18,7 +18,7 @@
 - (void)awakeWithContext:(id)context {
     [super awakeWithContext:context];
     playerDictionary = [[NSMutableDictionary alloc] initWithDictionary:context];
-    NSLog(@"%@",playerDictionary);
+
     [playerInterfaceController openParentApplication:context reply:^(NSDictionary *replyInfo, NSError *error) {
         
         if (error) {
@@ -43,8 +43,8 @@
 }
 
 - (void)setupPlayer {
-    self.songTitle = [[playerDictionary objectForKey:@"songList"] objectAtIndex:(int)[playerDictionary objectForKey:@"theIndex"]];
-    self.artistLabel = [[playerDictionary objectForKey:@"playThisSong"] objectAtIndex:(int)[playerDictionary objectForKey:@"theIndex"]];
+    [self.songTitle setText:[[playerDictionary objectForKey:@"songTitleList"] objectAtIndex:[[playerDictionary objectForKey:@"playIndex"] intValue]]];
+    [self.artistLabel setText:@"Artist"];
 }
 
 - (IBAction)nextTrack:(id)sender {
@@ -67,7 +67,15 @@
 }
 
 - (IBAction)playOrPause:(id)sender {
+    NSMutableDictionary *playPauseRequest = [[NSMutableDictionary alloc] initWithObjectsAndKeys:@"Play Or Pause",@"playPause", nil];
     
+    [playerInterfaceController openParentApplication:playPauseRequest reply:^(NSDictionary *replyInfo, NSError *error) {
+        if (error) {
+            NSLog(@"%@", error);
+        } else {
+            NSLog(@"%@", replyInfo);
+        }
+    }];
 }
 
 @end

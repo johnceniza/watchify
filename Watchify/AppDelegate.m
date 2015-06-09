@@ -67,50 +67,70 @@
 
 - (void)application:(UIApplication *)application handleWatchKitExtensionRequest:(NSDictionary *)userInfo reply:(void(^)(NSDictionary *replyInfo))reply {
     
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *documentsDirectoryPath = [paths objectAtIndex:0];
-    NSString *filePath = [documentsDirectoryPath stringByAppendingPathComponent:@"sessionData"];
+    if ([userInfo objectForKey:@"watchNeedsAuth"]) {
+        
+        NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+        
+        if ([newDefault objectForKey:@"sessionDataKey"]) {
+            
+            SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"sessionDataKey"]];
+            self.session = savedSession;
+            
+            NSDictionary *authSuccess = [[NSDictionary alloc] initWithObjectsAndKeys:@"Authentication successful",@"authSuccess", nil];
+            reply(authSuccess);
+
+        } else {
+            NSDictionary *authNeeded = [[NSDictionary alloc] initWithObjectsAndKeys:@"Please launch iPhone app to authenticate Sptofiy login.",@"authNeeded", nil];
+            reply(authNeeded);
+        }
     
-    if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+    } else if ([userInfo objectForKey:@"playlistURI"]) {
         
-        NSData *data = [NSData dataWithContentsOfFile:filePath];
-        SPTSession *savedSession = [NSKeyedUnarchiver unarchiveObjectWithData:data];
-        self.session = savedSession;
-    } else {
-        NSDictionary *authNeeded = [[NSDictionary alloc] initWithObjectsAndKeys:@"Please launch iPhone app to authenticate Sptofiy login.",@"authNeeded", nil];
-        reply(authNeeded);
-    }
-    
-    if ([userInfo objectForKey:@"theURI"]) {
-        
-        NSURL *url = [NSURL URLWithString:[userInfo objectForKey:@"theURI"]];
-        
+        NSURL *url = [NSURL URLWithString:[userInfo objectForKey:@"playlistURI"]];
+
         __block UIBackgroundTaskIdentifier bogusWorkaroundTask;
         bogusWorkaroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
             [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
         }];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ // increase the time to a larger value if you still don't get the data!!! I used 2 secs previously but my network is too weak!!!
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ // increase the time to a larger value if you still don't get the data!
             [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
         });
         
         [SPTPlaylistSnapshot playlistWithURI:url session:self.session callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
-            NSMutableArray *arrayOfTitles = [[NSMutableArray alloc] init];
-            NSMutableArray *arrayOfURLs = [[NSMutableArray alloc] init];
+            NSMutableDictionary *songlistDictionary = [[NSMutableDictionary alloc] init];
+            /*4 keys in dict
+             1. track name
+             2. track URI
+             3. track artist
+             4. track length
+             */
             
+            //WIP - want to get all of these but don't have enough time to get all four - so far just name and URI can come through. Need to find a way to optimize loop/initing dictionary or something - need at least artist name (length we can drop if need be)
+            
+            NSMutableArray *trackTitleArray = [[NSMutableArray alloc] init];
+            NSMutableArray *trackURIArray = [[NSMutableArray alloc] init];
+            //NSMutableArray *trackArtistArray = [[NSMutableArray alloc] init];
+            //NSMutableArray *trackLengthArray = [[NSMutableArray alloc] init];
+
             for (int i = 0; i<[songList.firstTrackPage.items count]; i++) {
-                [arrayOfTitles addObject:[[songList.firstTrackPage.items objectAtIndex:i] name]];
-                [arrayOfURLs addObject:[[[songList.firstTrackPage.items objectAtIndex:i] uri] absoluteString]];
+                [trackTitleArray addObject:[[songList.firstTrackPage.items objectAtIndex:i] name]];
+                [trackURIArray addObject:[[[songList.firstTrackPage.items objectAtIndex:i] uri] absoluteString]];
+                //[trackArtistArray addObject:[[songList.firstTrackPage.items objectAtIndex:i] artists]];
+                //[trackLengthArray addObject:[NSNumber numberWithInteger:[[songList.firstTrackPage.items objectAtIndex:i] length]]];
             }
             
-            NSDictionary *dictOfTitles = [[NSDictionary alloc] initWithObjectsAndKeys:arrayOfTitles,@"titleArray",arrayOfURLs,@"URLArray", nil];
-            
-            reply(dictOfTitles);
+            [songlistDictionary setObject:trackTitleArray forKey:@"songTitles"];
+            [songlistDictionary setObject:trackURIArray forKey:@"songURIs"];
+            //[songlistDictionary setObject:trackArtistArray forKey:@"songArtists"];
+            //[songlistDictionary setObject:trackLengthArray forKey:@"songLengths"];
+
+            reply(songlistDictionary);
             
         }];
         
-    } else if ([userInfo objectForKey:@"playThisSong"]) {
+    } else if ([userInfo objectForKey:@"songTitleList"]) {
         
-        NSArray *arrayOfURIStrings = [userInfo objectForKey:@"playThisSong"];
+        NSArray *arrayOfURIStrings = [userInfo objectForKey:@"songURISelected"];
         NSMutableArray *arrayOfURIs = [[NSMutableArray alloc] init];
         int indexToPlay = [[userInfo objectForKey:@"playIndex"] intValue];
         
@@ -131,10 +151,11 @@
                     NSDictionary *errorDict = [[NSDictionary alloc] initWithObjectsAndKeys:error,@"errorKey", nil];
                     reply(errorDict);
                 }
-                NSDictionary *successPlaying = [[NSDictionary alloc] initWithObjectsAndKeys:@"Playing Song!",@"errorKey", nil];
+                NSDictionary *successPlaying = [[NSDictionary alloc] initWithObjectsAndKeys:@"Playing Song after stopping!",@"success", nil];
                 reply(successPlaying);
             }];
         } else {
+
             __block UIBackgroundTaskIdentifier bogusWorkaroundTask;
             bogusWorkaroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
                 [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
@@ -156,14 +177,29 @@
                         NSDictionary *errorDict = [[NSDictionary alloc] initWithObjectsAndKeys:error,@"errorKey", nil];
                         reply(errorDict);
                     }
-                    NSDictionary *successPlaying = [[NSDictionary alloc] initWithObjectsAndKeys:@"Playing Song!",@"errorKey", nil];
+                    NSDictionary *successPlaying = [[NSDictionary alloc] initWithObjectsAndKeys:@"Playing Song after initializing player!",@"success", nil];
                     reply(successPlaying);
                 }];
             }];
         }
         
+    } else if ([userInfo objectForKey:@"playPause"]) {
+        if (self.player.isPlaying) {
+            //pause
+            [self.player setIsPlaying:NO callback:nil];
+            NSDictionary *successPausing = [[NSDictionary alloc] initWithObjectsAndKeys:@"Track Paused",@"delegateFeedback", nil];
+            reply(successPausing);
+        } else {
+            //play
+            [self.player setIsPlaying:YES callback:nil];
+            NSDictionary *successPausing = [[NSDictionary alloc] initWithObjectsAndKeys:@"Track Played",@"delegateFeedback", nil];
+            reply(successPausing);
+        }
     } else {
         
+        NSDictionary *successPlaying = [[NSDictionary alloc] initWithObjectsAndKeys:@"There's been an error :(",@"error", nil];
+        reply(successPlaying);
+
         reply(nil);
     }
 }

@@ -21,7 +21,19 @@
     // Configure interface objects here.
 
     NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-    playlistArray = [newDefault objectForKey:@"currentPlaylist"];
+    playlistArray = [newDefault objectForKey:@"listOfPlaylists"];
+    
+    NSDictionary *needAuth = [[NSDictionary alloc] initWithObjectsAndKeys:@"authMe",@"watchNeedsAuth", nil];
+    
+    [songListController openParentApplication:needAuth reply:^(NSDictionary *replyInfo, NSError *error) {
+        NSLog(@"%@", replyInfo);
+
+        if (error) {
+            NSLog(@"%@", error);
+        } else {
+            NSLog(@"%@", replyInfo);
+        }
+    }];
 }
 
 - (void)willActivate {
@@ -37,21 +49,21 @@
 
 - (void)setupTable {
     
-    [self.playlistTable setNumberOfRows:[playlistArray count] withRowType:@"universalRowID"];
-    NSArray *titles = [playlistArray allKeys];
-    NSArray *uris = [playlistArray allValues];
-    
+    [self.playlistTable setNumberOfRows:[[playlistArray objectForKey:@"playlistTitles"] count] withRowType:@"universalRowID"];
+    NSArray *titles = [playlistArray objectForKey:@"playlistTitles"];
+    NSArray *trackCounts = [playlistArray objectForKey:@"playlistTrackCounts"];
+
     for (int i = 0; i < self.playlistTable.numberOfRows; i++)
     {
         universalRow *row = [self.playlistTable rowControllerAtIndex:i];
         [row.mainTitle setText:[titles objectAtIndex:i]];
-        [row.subtitleLabel setText:[uris objectAtIndex:i]];
+        [row.subtitleLabel setText:[NSString stringWithFormat:@"%@ tracks", [trackCounts objectAtIndex:i]]];
     }
 }
 
 - (id)contextForSegueWithIdentifier:(NSString *)segueIdentifier inTable:(WKInterfaceTable *)table rowIndex:(NSInteger)rowIndex {
-    NSArray *allkeys = [playlistArray allKeys];
-    return [playlistArray objectForKey:[allkeys objectAtIndex:rowIndex]];
+    NSDictionary *songsInPlaylist = [[NSDictionary alloc] initWithObjectsAndKeys:[[playlistArray objectForKey:@"playlistTitles"] objectAtIndex:rowIndex],@"playlistTitle",[[playlistArray objectForKey:@"playlistURIs"] objectAtIndex:rowIndex], @"playlistURI",[[playlistArray objectForKey:@"playlistTrackCounts"] objectAtIndex:rowIndex], @"playlistTrackCount", nil];
+    return songsInPlaylist;
 }
 
 @end
