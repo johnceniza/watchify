@@ -20,9 +20,12 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
-    
-    //[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
-    
+    [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
+    [self becomeFirstResponder];
+    return YES;
+}
+
+- (BOOL)canBecomeFirstResponder {
     return YES;
 }
 
@@ -151,7 +154,8 @@
         NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
         auth.session = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
         [self saveSession:auth];
-
+        [self saveCurrentQueue: userInfo];
+        
         NSArray *arrayOfURIStrings = [userInfo objectForKey:@"songURISelected"];
         NSMutableArray *arrayOfURIs = [[NSMutableArray alloc] init];
         int indexToPlay = [[userInfo objectForKey:@"playIndex"] intValue];
@@ -232,6 +236,47 @@
     NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
     [newDefault setObject:authSessionData forKey:@"authSessionDataKey"];
     [newDefault synchronize];
+}
+
+- (void)saveCurrentQueue: (NSDictionary *)dictSaved {
+    NSData *queueData = [NSKeyedArchiver archivedDataWithRootObject:dictSaved];
+
+    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+    [newDefault setObject:queueData forKey:@"currentQueue"];
+    [newDefault synchronize];
+}
+
+-(void)remoteControlReceivedWithEvent:(UIEvent *)event
+{
+    switch (event.subtype) {
+        case UIEventSubtypeRemoteControlTogglePlayPause:
+            if (self.player.isPlaying) {
+                //pause
+                [self.player setIsPlaying:NO callback:nil];
+            } else {
+                //play
+                [self.player setIsPlaying:YES callback:nil];
+            }
+            break;
+        case UIEventSubtypeRemoteControlPlay:
+            [self.player setIsPlaying:YES callback:nil];
+            break;
+        case UIEventSubtypeRemoteControlPause:
+            [self.player setIsPlaying:NO callback:nil];
+            break;
+        case UIEventSubtypeRemoteControlStop:
+            [self.player setIsPlaying:NO callback:nil];
+            break;
+        case UIEventSubtypeRemoteControlNextTrack:
+            [self.player skipNext:nil];
+            break;
+        case UIEventSubtypeRemoteControlPreviousTrack:
+            [self.player skipPrevious:nil];
+            break;
+        default:
+            break;
+    }
+    
 }
 
 @end

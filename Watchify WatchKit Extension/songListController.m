@@ -65,13 +65,17 @@
     }
 }
 
-- (id)contextForSegueWithIdentifier:(NSString *)segueIdentifier inTable:(WKInterfaceTable *)table rowIndex:(NSInteger)rowIndex {
-    
-    //WIP - in the future need to add artist and track time when we figure out how to pull that from appdelegate (right now it can't handle passing back all of that only track title and URI)
-    
+- (void)table:(WKInterfaceTable *)table didSelectRowAtIndex:(NSInteger)rowIndex {
     NSDictionary *songSelected = [[NSDictionary alloc] initWithObjectsAndKeys:[songlistDict objectForKey:@"songTitles"],@"songTitleList",[songlistDict objectForKey:@"songURIs"], @"songURISelected", [NSNumber numberWithLong:rowIndex], @"playIndex", nil];
-    
-    return (songSelected);
+
+    [songListController openParentApplication:songSelected reply:^(NSDictionary *replyInfo, NSError *error) {
+        
+        if (error) {
+            NSLog(@"%@", error);
+        } else {
+            NSLog(@"%@", replyInfo);
+        }
+    }];
 }
 
 @end
