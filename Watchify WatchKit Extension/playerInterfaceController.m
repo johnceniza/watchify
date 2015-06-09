@@ -8,9 +8,7 @@
 
 #import "playerInterfaceController.h"
 
-
 @interface playerInterfaceController ()
-
 @end
 
 @implementation playerInterfaceController
@@ -48,18 +46,7 @@
 }
 
 - (IBAction)nextTrack:(id)sender {
-    int indexCalc = [[playerDictionary objectForKey:@"theIndex"] intValue]+1;
-    NSNumber *indexNS = [NSNumber numberWithInteger:indexCalc];
-    [playerDictionary setObject:indexNS forKey:@"theIndex"];
-    
-    [playerInterfaceController openParentApplication:playerDictionary reply:^(NSDictionary *replyInfo, NSError *error) {
-        if (error) {
-            NSLog(@"%@", error);
-        } else {
-            [self setupPlayer];
-            NSLog(@"%@", replyInfo);
-        }
-    }];
+
 }
 
 - (IBAction)prevTracak:(id)sender {

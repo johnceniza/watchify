@@ -58,9 +58,6 @@
                                                 <fontDescription key="font" style="UICTFontTextStyleFootnote"/>
                                             </label>
                                         </items>
-                                        <connections>
-                                            <segue destination="ilK-Qu-X65" kind="push" identifier="playerSegue" id="02L-iA-oj3"/>
-                                        </connections>
                                     </group>
                                     <connections>
                                         <outlet property="mainTitle" destination="r97-xV-cU7" id="cr9-TZ-5Lr"/>
