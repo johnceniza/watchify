@@ -18,21 +18,17 @@
 - (void)awakeWithContext:(id)context {
     [super awakeWithContext:context];
     // Configure interface objects here.
-    [self requestSongListForURI: context];
+    [self setupTempTable];
+    [self requestSongsInPlaylist: context];
 }
 
-- (void)requestSongListForURI: (NSString *)URI {
-    NSDictionary *request = [NSDictionary dictionaryWithObjectsAndKeys:URI, @"theURI", nil];
-
-    [songListController openParentApplication:request reply:^(NSDictionary *replyInfo, NSError *error) {
-        
-        NSLog(@"%@", replyInfo);
-        
+- (void)requestSongsInPlaylist: (NSDictionary *)playlistDict {
+    
+    [songListController openParentApplication:playlistDict reply:^(NSDictionary *replyInfo, NSError *error) {
         if (error) {
             NSLog(@"%@", error);
         } else {
-            songArray = [replyInfo objectForKey:@"titleArray"];
-            URIArray = [replyInfo objectForKey:@"URLArray"];
+            songlistDict = [[NSMutableDictionary alloc] initWithDictionary:replyInfo];
             [self setupTable];
         }
     }];
@@ -48,21 +44,34 @@
     [super didDeactivate];
 }
 
-- (void)setupTable {
+- (void)setupTempTable {
+    [self.songlistTable setNumberOfRows:1 withRowType:@"universalRowSong"];
+    for (int i = 0; i < self.songlistTable.numberOfRows; i++)
+    {
+        universalRow *row = [self.songlistTable rowControllerAtIndex:i];
+        [row.mainTitle setText:@"Loading tracks..."];
+    }
+}
+
+- (void)setupTable{
     
-    [self.songlistTable setNumberOfRows:[songArray count] withRowType:@"universalRowSong"];
+    [self.songlistTable setNumberOfRows:[[songlistDict objectForKey:@"songTitles"] count] withRowType:@"universalRowSong"];
     
     for (int i = 0; i < self.songlistTable.numberOfRows; i++)
     {
         universalRow *row = [self.songlistTable rowControllerAtIndex:i];
-        [row.mainTitle setText:[songArray objectAtIndex:i]];
-        [row.subtitleLabel setText:@"subtitle!"];
+        [row.mainTitle setText:[[songlistDict objectForKey:@"songTitles"] objectAtIndex:i]];
+        [row.subtitleLabel setText:@"Artist"];
     }
 }
 
 - (id)contextForSegueWithIdentifier:(NSString *)segueIdentifier inTable:(WKInterfaceTable *)table rowIndex:(NSInteger)rowIndex {
-    NSDictionary *songRequestURI = [NSDictionary dictionaryWithObjectsAndKeys:URIArray, @"playThisSong", [NSNumber numberWithLong:rowIndex], @"playIndex",songArray,@"songList", nil];
-    return (songRequestURI);
+    
+    //WIP - in the future need to add artist and track time when we figure out how to pull that from appdelegate (right now it can't handle passing back all of that only track title and URI)
+    
+    NSDictionary *songSelected = [[NSDictionary alloc] initWithObjectsAndKeys:[songlistDict objectForKey:@"songTitles"],@"songTitleList",[songlistDict objectForKey:@"songURIs"], @"songURISelected", [NSNumber numberWithLong:rowIndex], @"playIndex", nil];
+    
+    return (songSelected);
 }
 
 @end

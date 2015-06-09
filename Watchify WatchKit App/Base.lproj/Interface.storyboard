@@ -80,7 +80,7 @@
         <!--Player-->
         <scene sceneID="tx0-bV-1bp">
             <objects>
-                <controller title="Player" id="ilK-Qu-X65" customClass="playerInterfaceController">
+                <controller identifier="playerInterface" title="Player" id="ilK-Qu-X65" customClass="playerInterfaceController">
                     <items>
                         <label alignment="center" verticalAlignment="center" text="Song Title" id="zza-Cl-vOj">
                             <fontDescription key="font" style="UICTFontTextStyleHeadline"/>
@@ -110,7 +110,7 @@
                                 </button>
                             </items>
                         </group>
-                        <slider width="1" alignment="left" verticalAlignment="center" value="1" maximum="3" steps="3" id="XAx-0k-kPu"/>
+                        <slider width="1" alignment="left" verticalAlignment="center" value="1" maximum="10" steps="1" id="XAx-0k-kPu"/>
                     </items>
                     <connections>
                         <outlet property="artistLabel" destination="riv-C0-VBg" id="7ww-jz-ZMB"/>
