@@ -10,6 +10,7 @@
 #import "ViewController.h"
 #import <Spotify/Spotify.h>
 #import <AVFoundation/AVFoundation.h>
+#import <MediaPlayer/MediaPlayer.h>
 
 @interface AppDelegate ()
 @property (nonatomic, strong) SPTSession *session;
@@ -67,6 +68,13 @@
     
     return NO;
 }
+
+//TODO: Need to figure out how to fix bug.
+/*
+ 1. pick song to play
+ 2. go to glances and use remote control to pause.
+ 3. come back to app, nothing works - can't seem to call appdelegate? playlists don't show - stuck at "loading playlist" not even calling needAuth it seems like
+ */
 
 - (void)application:(UIApplication *)application handleWatchKitExtensionRequest:(NSDictionary *)userInfo reply:(void(^)(NSDictionary *replyInfo))reply {
     
@@ -150,11 +158,15 @@
         NSMutableArray *arrayOfURIs = [[NSMutableArray alloc] init];
         int indexToPlay = [[userInfo objectForKey:@"playIndex"] intValue];
         
+        NSLog(@"%@", userInfo);
+        
         for (int i = 0; i < [arrayOfURIStrings count]; i++) {
             NSURL *URLfromString = [NSURL URLWithString:[arrayOfURIStrings objectAtIndex:i]];
             [arrayOfURIs addObject:URLfromString];
         }
 
+        NSLog(@"self.player: %@", self.player);
+        
         if (self.player == nil) {
             self.player = [[SPTAudioStreamingController alloc] initWithClientId:[SPTAuth defaultInstance].clientID];
         }
@@ -167,6 +179,7 @@
                     NSDictionary *errorDict = [[NSDictionary alloc] initWithObjectsAndKeys:error,@"errorKey", nil];
                     reply(errorDict);
                 }
+                
                 NSDictionary *successPlaying = [[NSDictionary alloc] initWithObjectsAndKeys:@"Playing Song after stopping!",@"success", nil];
                 reply(successPlaying);
             }];
@@ -224,7 +237,6 @@
 {
     switch (event.subtype) {
         case UIEventSubtypeRemoteControlTogglePlayPause:
-            
             if (self.player.isPlaying) {
                 //pause
                 [self.player setIsPlaying:NO callback:nil];
@@ -232,7 +244,6 @@
                 //play
                 [self.player setIsPlaying:YES callback:nil];
             }
-            
             break;
         case UIEventSubtypeRemoteControlPlay:
             [self.player setIsPlaying:YES callback:nil];
@@ -253,6 +264,13 @@
             break;
     }
     
+}
+
+- (void)setMetadata: (NSDictionary *)metadataDict {
+    NSDictionary *nowPlayingInfo = @{MPMediaItemPropertyTitle: @"Title",
+                                     MPMediaItemPropertyArtist: @"Artist",
+                                     MPMediaItemPropertyAlbumTitle: @"Album"};
+    [[MPNowPlayingInfoCenter defaultCenter] setNowPlayingInfo:nowPlayingInfo];
 }
 
 @end

@@ -24,18 +24,6 @@
     NSMutableDictionary *listOfSongs = [[NSMutableDictionary alloc] initWithDictionary:context];
     [newDefault setObject:listOfSongs forKey:@"currentPickedPlaylist"];
     [newDefault synchronize];
-
-    NSDictionary *needAuth = [[NSDictionary alloc] initWithObjectsAndKeys:@"authMe",@"watchNeedsAuth", nil];
-    
-    [songListController openParentApplication:needAuth reply:^(NSDictionary *replyInfo, NSError *error) {
-        NSLog(@"%@", replyInfo);
-        if (error) {
-            NSLog(@"%@", error);
-        } else {
-            NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-            [self requestSongsInPlaylist: [newDefault objectForKey:@"currentPickedPlaylist"]];
-        }
-    }];
 }
 
 - (void)requestSongsInPlaylist: (NSDictionary *)playlistDict {
@@ -53,6 +41,23 @@
 - (void)willActivate {
     // This method is called when watch view controller is about to be visible to user
     [super willActivate];
+    
+    NSDictionary *needAuth = [[NSDictionary alloc] initWithObjectsAndKeys:@"authMe",@"watchNeedsAuth", nil];
+    
+    [songListController openParentApplication:needAuth reply:^(NSDictionary *replyInfo, NSError *error) {
+        NSLog(@"%@", replyInfo);
+        if (error) {
+            NSLog(@"%@", error);
+        } else {
+            if ([replyInfo objectForKey:@"authNeeded"]!= nil) {
+                //request phone login
+                [self setupAuthNeedTable];
+            } else {
+                NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+                [self requestSongsInPlaylist: [newDefault objectForKey:@"currentPickedPlaylist"]];
+            }
+        }
+    }];
 }
 
 - (void)didDeactivate {
@@ -66,6 +71,16 @@
     {
         universalRow *row = [self.songlistTable rowControllerAtIndex:i];
         [row.mainTitle setText:@"Loading tracks..."];
+    }
+}
+
+- (void)setupAuthNeedTable {
+    [self.songlistTable setNumberOfRows:1 withRowType:@"universalRowSong"];
+    for (int i = 0; i < self.songlistTable.numberOfRows; i++)
+    {
+        universalRow *row = [self.songlistTable rowControllerAtIndex:i];
+        [row.mainTitle setText:@"Open iPhone app."];
+        [row.subtitleLabel setText:@"Spotify login needed."];
     }
 }
 

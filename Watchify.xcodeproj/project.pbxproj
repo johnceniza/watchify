@@ -28,6 +28,7 @@
 		6DA400BC1B236F6600DA8B68 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6DA400BB1B236F6600DA8B68 /* Images.xcassets */; };
 		6DA400BF1B236F6600DA8B68 /* Watchify WatchKit Extension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 6DA400A31B236F6600DA8B68 /* Watchify WatchKit Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		6DA400CB1B2373C000DA8B68 /* universalRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 6DA400CA1B2373C000DA8B68 /* universalRow.m */; };
+		6DAD437E1B405CE60029A51C /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6DAD437D1B405CE60029A51C /* MediaPlayer.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -94,6 +95,7 @@
 		6DA400CA1B2373C000DA8B68 /* universalRow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = universalRow.m; sourceTree = "<group>"; };
 		6DA400CC1B23777200DA8B68 /* Watchify.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Watchify.entitlements; sourceTree = "<group>"; };
 		6DA400CD1B23778C00DA8B68 /* Watchify WatchKit Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Watchify WatchKit Extension.entitlements"; sourceTree = "<group>"; };
+		6DAD437D1B405CE60029A51C /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +103,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6DAD437E1B405CE60029A51C /* MediaPlayer.framework in Frameworks */,
 				6DA4004B1B23459200DA8B68 /* SystemConfiguration.framework in Frameworks */,
 				6DA400491B23458600DA8B68 /* AVFoundation.framework in Frameworks */,
 				6DA400461B23415E00DA8B68 /* Spotify.framework in Frameworks */,
@@ -121,6 +124,7 @@
 		6D1FE9D01B233DE300249430 = {
 			isa = PBXGroup;
 			children = (
+				6DAD437D1B405CE60029A51C /* MediaPlayer.framework */,
 				6D1FE9DB1B233DE300249430 /* Watchify */,
 				6DA400A41B236F6600DA8B68 /* Watchify WatchKit Extension */,
 				6DA400B51B236F6600DA8B68 /* Watchify WatchKit App */,
