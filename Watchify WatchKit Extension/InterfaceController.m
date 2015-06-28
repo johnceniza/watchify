@@ -19,26 +19,33 @@
 - (void)awakeWithContext:(id)context {
     [super awakeWithContext:context];
     // Configure interface objects here.
-
-    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-    playlistArray = [newDefault objectForKey:@"listOfPlaylists"];
     
     NSDictionary *needAuth = [[NSDictionary alloc] initWithObjectsAndKeys:@"authMe",@"watchNeedsAuth", nil];
-    
+    [self setupTempTable];
     [songListController openParentApplication:needAuth reply:^(NSDictionary *replyInfo, NSError *error) {
         NSLog(@"%@", replyInfo);
-
         if (error) {
             NSLog(@"%@", error);
         } else {
             NSLog(@"%@", replyInfo);
+            NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+            playlistArray = [newDefault objectForKey:@"listOfPlaylists"];
+            [self setupTable];
         }
     }];
 }
 
+- (void)setupTempTable {
+    [self.playlistTable setNumberOfRows:1 withRowType:@"universalRowID"];
+    for (int i = 0; i < self.playlistTable.numberOfRows; i++)
+    {
+        universalRow *row = [self.playlistTable rowControllerAtIndex:i];
+        [row.mainTitle setText:@"Loading playlists..."];
+    }
+}
+
 - (void)willActivate {
     // This method is called when watch view controller is about to be visible to user
-    [self setupTable];
     [super willActivate];
 }
 
@@ -56,12 +63,16 @@
     for (int i = 0; i < self.playlistTable.numberOfRows; i++)
     {
         universalRow *row = [self.playlistTable rowControllerAtIndex:i];
+        [row.mainTitle setTextColor:[UIColor lightTextColor]];
+        [row.subtitleLabel setTextColor:[UIColor lightTextColor]];
         [row.mainTitle setText:[titles objectAtIndex:i]];
         [row.subtitleLabel setText:[NSString stringWithFormat:@"%@ tracks", [trackCounts objectAtIndex:i]]];
     }
 }
 
 - (id)contextForSegueWithIdentifier:(NSString *)segueIdentifier inTable:(WKInterfaceTable *)table rowIndex:(NSInteger)rowIndex {
+    [[[table rowControllerAtIndex:rowIndex] mainTitle] setTextColor:[UIColor greenColor]];
+
     NSDictionary *songsInPlaylist = [[NSDictionary alloc] initWithObjectsAndKeys:[[playlistArray objectForKey:@"playlistTitles"] objectAtIndex:rowIndex],@"playlistTitle",[[playlistArray objectForKey:@"playlistURIs"] objectAtIndex:rowIndex], @"playlistURI",[[playlistArray objectForKey:@"playlistTrackCounts"] objectAtIndex:rowIndex], @"playlistTrackCount", nil];
     return songsInPlaylist;
 }

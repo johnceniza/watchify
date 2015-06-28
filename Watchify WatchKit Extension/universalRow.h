@@ -15,5 +15,6 @@
 
 @property (nonatomic, weak) IBOutlet WKInterfaceLabel *mainTitle;
 @property (nonatomic, weak) IBOutlet WKInterfaceLabel *subtitleLabel;
+@property (nonatomic, weak) IBOutlet WKInterfaceImage *selectedImage;
 
 @end

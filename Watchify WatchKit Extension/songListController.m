@@ -19,7 +19,23 @@
     [super awakeWithContext:context];
     // Configure interface objects here.
     [self setupTempTable];
-    [self requestSongsInPlaylist: context];
+    
+    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+    NSMutableDictionary *listOfSongs = [[NSMutableDictionary alloc] initWithDictionary:context];
+    [newDefault setObject:listOfSongs forKey:@"currentPickedPlaylist"];
+    [newDefault synchronize];
+
+    NSDictionary *needAuth = [[NSDictionary alloc] initWithObjectsAndKeys:@"authMe",@"watchNeedsAuth", nil];
+    
+    [songListController openParentApplication:needAuth reply:^(NSDictionary *replyInfo, NSError *error) {
+        NSLog(@"%@", replyInfo);
+        if (error) {
+            NSLog(@"%@", error);
+        } else {
+            NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+            [self requestSongsInPlaylist: [newDefault objectForKey:@"currentPickedPlaylist"]];
+        }
+    }];
 }
 
 - (void)requestSongsInPlaylist: (NSDictionary *)playlistDict {
@@ -60,12 +76,17 @@
     for (int i = 0; i < self.songlistTable.numberOfRows; i++)
     {
         universalRow *row = [self.songlistTable rowControllerAtIndex:i];
+        [row.mainTitle setTextColor:[UIColor lightTextColor]];
+        [row.subtitleLabel setTextColor:[UIColor lightTextColor]];
         [row.mainTitle setText:[[songlistDict objectForKey:@"songTitles"] objectAtIndex:i]];
         [row.subtitleLabel setText:@"Artist"];
     }
 }
 
 - (void)table:(WKInterfaceTable *)table didSelectRowAtIndex:(NSInteger)rowIndex {
+    
+    [[[table rowControllerAtIndex:rowIndex] mainTitle] setTextColor:[UIColor greenColor]];
+
     NSDictionary *songSelected = [[NSDictionary alloc] initWithObjectsAndKeys:[songlistDict objectForKey:@"songTitles"],@"songTitleList",[songlistDict objectForKey:@"songURIs"], @"songURISelected", [NSNumber numberWithLong:rowIndex], @"playIndex", nil];
 
     [songListController openParentApplication:songSelected reply:^(NSDictionary *replyInfo, NSError *error) {

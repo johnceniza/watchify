@@ -41,22 +41,17 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
 }
 
 - (void)checkSession {
-    SPTAuth *auth = [SPTAuth defaultInstance];
+    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+    self.session = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
     
     // Check if we have a token at all
-    if (auth.session == nil) {
+    if (self.session == nil) {
         [self createLoginButton];
-    }
-    
-    // Check if it's still valid
-    if ([auth.session isValid] && self.firstLoad) {
+    } else if ([self.session isValid]) {
         // It's still valid, show the player.
         [self getPlaylists:self.session];
         return;
-    }
-    
-    // Oh noes, the token has expired, if we have a token refresh service set up, we'll call tat one.
-    if (auth.hasTokenRefreshService) {
+    } else {
         [self renewTokenAndShowPlayer];
     }
 }
@@ -65,9 +60,8 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
     SPTAuth *auth = [SPTAuth defaultInstance];
     
     [auth renewSession:auth.session callback:^(NSError *error, SPTSession *session) {
-        auth.session = session;
         
-        NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:auth.session];
+        NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:session];
         
         NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
         [newDefault setObject:authSessionData forKey:@"authSessionDataKey"];
@@ -93,17 +87,15 @@ static NSString * const kCallbackURL = @"watchifyspotify://";
     } else {
         [loginButton removeFromSuperview];
         
-        SPTAuth *auth = [SPTAuth defaultInstance];
-
-        auth.session = theSession;
+        self.session = theSession;
         
-        NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:auth.session];
+        NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:theSession];
         
         NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
         [newDefault setObject:authSessionData forKey:@"authSessionDataKey"];
         [newDefault synchronize];
 
-        [self getPlaylists:auth.session];
+        [self getPlaylists:theSession];
     }
 }
 

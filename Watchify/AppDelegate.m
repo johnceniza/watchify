@@ -71,40 +71,34 @@
 - (void)application:(UIApplication *)application handleWatchKitExtensionRequest:(NSDictionary *)userInfo reply:(void(^)(NSDictionary *replyInfo))reply {
     
     if ([userInfo objectForKey:@"watchNeedsAuth"]) {
-        SPTAuth *auth = [SPTAuth defaultInstance];
-        
         NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-        auth.session = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
-        [self saveSession:auth];
+        SPTSession *theSession = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
         
-        // Check if we have a token at all
-        if (auth.session == nil) {
+        if (theSession == nil) {
             NSDictionary *authNeeded = [[NSDictionary alloc] initWithObjectsAndKeys:@"Please launch iPhone app to authenticate Sptofiy login.",@"authNeeded", nil];
             reply(authNeeded);
-        }
-        
-        // Check if it's still valid
-        if ([auth.session isValid]) {
+        } else if ([theSession isValid]) {
             // It's still valid, show the player.
             NSDictionary *authSuccess = [[NSDictionary alloc] initWithObjectsAndKeys:@"Authentication successful",@"authSuccess", nil];
             reply(authSuccess);
-        }
-        
-        // Oh noes, the token has expired, if we have a token refresh service set up, we'll call tat one.
-        if (auth.hasTokenRefreshService) {
-            [[SPTAuth defaultInstance] renewSession:auth.session callback:^(NSError *error, SPTSession *sessionRefresh) {
-                auth.session = sessionRefresh;
+        } else {
+            [[SPTAuth defaultInstance] renewSession:theSession callback:^(NSError *error, SPTSession *sessionRefresh) {
+                
+                NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:sessionRefresh];
+                
+                NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
+                [newDefault setObject:authSessionData forKey:@"authSessionDataKey"];
+                [newDefault synchronize];
+                
                 NSDictionary *authSuccess = [[NSDictionary alloc] initWithObjectsAndKeys:@"Authentication refresh successful",@"authSuccess", nil];
                 reply(authSuccess);
             }];
         }
         
     } else if ([userInfo objectForKey:@"playlistURI"]) {
-        SPTAuth *auth = [SPTAuth defaultInstance];
         
         NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-        auth.session = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
-        [self saveSession:auth];
+        SPTSession *theSession = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
 
         NSURL *url = [NSURL URLWithString:[userInfo objectForKey:@"playlistURI"]];
 
@@ -116,7 +110,7 @@
             [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
         });
         
-        [SPTPlaylistSnapshot playlistWithURI:url session:auth.session callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
+        [SPTPlaylistSnapshot playlistWithURI:url session:theSession callback:^(NSError *error, SPTPlaylistSnapshot *songList) {
             NSMutableDictionary *songlistDictionary = [[NSMutableDictionary alloc] init];
             /*4 keys in dict
              1. track name
@@ -149,12 +143,8 @@
         }];
         
     } else if ([userInfo objectForKey:@"songTitleList"]) {
-        SPTAuth *auth = [SPTAuth defaultInstance];
-        
         NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-        auth.session = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
-        [self saveSession:auth];
-        [self saveCurrentQueue: userInfo];
+        SPTSession *theSession = [NSKeyedUnarchiver unarchiveObjectWithData:[newDefault objectForKey:@"authSessionDataKey"]];
         
         NSArray *arrayOfURIStrings = [userInfo objectForKey:@"songURISelected"];
         NSMutableArray *arrayOfURIs = [[NSMutableArray alloc] init];
@@ -190,7 +180,7 @@
                 [[UIApplication sharedApplication] endBackgroundTask:bogusWorkaroundTask];
             });
             
-            [self.player loginWithSession:auth.session callback:^(NSError *error) {
+            [self.player loginWithSession:theSession callback:^(NSError *error) {
                 if (error != nil) {
                     NSLog(@"*** Logging in got error: %@", error);
                     NSDictionary *errorDict = [[NSDictionary alloc] initWithObjectsAndKeys:error,@"errorKey", nil];
@@ -230,26 +220,11 @@
     }
 }
 
-- (void)saveSession: (SPTAuth *)authToSave {
-    NSData *authSessionData = [NSKeyedArchiver archivedDataWithRootObject:authToSave.session];
-    
-    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-    [newDefault setObject:authSessionData forKey:@"authSessionDataKey"];
-    [newDefault synchronize];
-}
-
-- (void)saveCurrentQueue: (NSDictionary *)dictSaved {
-    NSData *queueData = [NSKeyedArchiver archivedDataWithRootObject:dictSaved];
-
-    NSUserDefaults *newDefault = [[NSUserDefaults alloc] initWithSuiteName:@"group.appDeco.watchify"];
-    [newDefault setObject:queueData forKey:@"currentQueue"];
-    [newDefault synchronize];
-}
-
 -(void)remoteControlReceivedWithEvent:(UIEvent *)event
 {
     switch (event.subtype) {
         case UIEventSubtypeRemoteControlTogglePlayPause:
+            
             if (self.player.isPlaying) {
                 //pause
                 [self.player setIsPlaying:NO callback:nil];
@@ -257,6 +232,7 @@
                 //play
                 [self.player setIsPlaying:YES callback:nil];
             }
+            
             break;
         case UIEventSubtypeRemoteControlPlay:
             [self.player setIsPlaying:YES callback:nil];
